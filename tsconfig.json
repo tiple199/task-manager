@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": [
+      "node"
+    ],
+    "rootDir": ".",
+    "outDir": "dist",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "generated/*": [
+        "./generated/*"
+      ]
+    },
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+  },
+  "include": [
+    "src",
+    "lib",
+    "generated",
+
+  ]
+}
