@@ -1,22 +1,27 @@
+import AppError from "@/utils/appError";
 import { Request, Response, NextFunction } from "express";
 
-interface AppError extends Error {
-  statusCode?: number;
-}
-
 const errorHandler = (
-  err: AppError,
+  err: unknown,
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  console.error(err.stack);
+  console.error(err);
 
-  const statusCode = err.statusCode || 500;
+  //  lỗi có kiểm soát
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+      errors: err.errors || null,
+    });
+  }
 
-  res.status(statusCode).json({
+  //  lỗi không xác định
+  return res.status(500).json({
     success: false,
-    message: err.message || "Internal Server Error",
+    message: "Internal Server Error",
   });
 };
 

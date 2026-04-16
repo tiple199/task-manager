@@ -1,13 +1,5 @@
-import { isEmailExists } from "@/services/auth.service";
 import z from "zod";
 const emailSchema = z.email("Invalid email format.")
-.refine( async (email) => {
-    const existingUser = await isEmailExists(email);
-    return !existingUser;
-},{
-    error: "Email already exists.",
-    path: ["email"]
-});
 
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters long.")
 .max(20, "Password must be at most 20 characters long.")

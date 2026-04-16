@@ -1,4 +1,5 @@
 import { prisma } from "@/config/prisma"
+import AppError from "@/utils/appError";
 import bcrypt, { compare } from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -22,6 +23,11 @@ const isEmailExists = async (email: string) => {
 }
 
 const registerNewUser = async (fullName: string, email: string, password: string) => {
+
+    const emailExists = await isEmailExists(email);
+    if(emailExists) {
+        throw new AppError("Email already exists.", 400, [{field: "email", message: "Email already exists."}]);
+    }
     
     const hashedPassword = await hashPassword(password);
     
@@ -44,12 +50,12 @@ const handleLogin = async (email: string, password: string) => {
     });
 
     if (!user) {
-        throw new Error("Invalid email or password.");
+        throw new AppError("Invalid email or password.",401);
     }
 
     const passwordMatch = await comparePassword(password, user.password);
     if (!passwordMatch) {
-        throw new Error("Invalid email or password.");
+        throw new AppError("Invalid email or password.",401);
     }
     const payload = {
         userId: user.id,

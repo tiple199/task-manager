@@ -39,7 +39,7 @@ const handleGetAllTasks = async (
 };
 
 const handleCreateTask = async (userId: number, taskData: TTaskSchema) => {
-    const result = prisma.task.create({
+    const result = await prisma.task.create({
             data: {
                 title: taskData.title,
                 description: taskData.description,
@@ -71,7 +71,7 @@ const handleFindTaskById = async (userId: number, taskId: number) => {
 }
 
 const handleUpdateTask = async (userId: number, taskId: number, updateData: Partial<TTaskSchema>) => {
-    const result = prisma.task.updateMany({
+    const result = await prisma.task.updateMany({
         where: {
             id: taskId,
             userId: userId
@@ -83,7 +83,7 @@ const handleUpdateTask = async (userId: number, taskId: number, updateData: Part
 }
 
 const handleDeleteTask = async (userId: number, taskId: number) => {
-    const result = prisma.task.deleteMany({
+    const result = await prisma.task.deleteMany({
         where: {
             id: +taskId,
             userId: +userId

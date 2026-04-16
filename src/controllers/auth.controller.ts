@@ -1,4 +1,5 @@
 import { handleLogin, registerNewUser } from "@/services/auth.service";
+import AppError from "@/utils/appError";
 import { registerSchema, TRegisterSchema,TLoginSchema, loginSchema } from "@/validation/auth.schema";
 import { Request, Response } from "express";
 const createUserAPI = async (req: Request, res: Response) => {
@@ -19,10 +20,7 @@ const createUserAPI = async (req: Request, res: Response) => {
                 message: err.message
             }));
 
-        return res.status(400).json({
-            success: false,
-            message: firstErrors
-        });
+        throw new AppError("Validation failed.", 400, firstErrors);
     }
 
     await registerNewUser(fullName, email, password);
@@ -50,26 +48,16 @@ const loginAPI = async (req: Request, res: Response) => {
                 field: String(err.path[0] ?? "general"),
                 message: err.message
             }));
-        return res.status(400).json({
-            success: false,
-            message: firstErrors
-        });
+        throw new AppError("Validation failed.", 400, firstErrors);
     }
 
-    try {
+
         const accessToken = await handleLogin(email, password);
         return res.status(200).json({
             success: true,
             message: "Login successful.",
             data: {accessToken}
         });
-    } catch (error) {
-        return res.status(401).json({
-            success: false,
-            message: error instanceof Error ? error.message : "Login failed.",
-            data: null
-        });
-    }
 }
 
 export { createUserAPI,loginAPI }

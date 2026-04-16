@@ -1,10 +1,15 @@
 import { handleCreateTask, handleDeleteTask, handleFindTaskById, handleGetAllTasks, handleUpdateTask } from "@/services/task.service";
+import AppError from "@/utils/appError";
 import { taskSchema, TTaskSchema, TUpdateTaskSchema, updateTaskSchema } from "@/validation/task.schema";
 import { taskQuerySchema } from "@/validation/taskQuery.schema";
 import { Request, Response } from "express";
 
 const getAllTasksAPI = async (req: Request, res: Response) => {
-  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+        throw new AppError("Unauthorized", 401);
+    }
+
     const validation = await taskQuerySchema.safeParseAsync(req.query);
     if (!validation.success) {
       const errorZod = validation.error.issues;
@@ -14,11 +19,7 @@ const getAllTasksAPI = async (req: Request, res: Response) => {
           message: item.message
         }
       })
-      return res.status(400).json({
-        success: false,
-        message: "Validation failed.",
-        errors
-      });
+      throw new AppError("Validation failed", 400, errors);
     }
     const {
         status: taskStatus,
@@ -29,13 +30,7 @@ const getAllTasksAPI = async (req: Request, res: Response) => {
         sort
     } = validation.data;
 
-    const userId = req.user?.userId;
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized"
-      });
-    }
+    
     const tasks = await handleGetAllTasks(
       Number(userId),
       taskStatus,
@@ -53,23 +48,13 @@ const getAllTasksAPI = async (req: Request, res: Response) => {
         count: tasks.length
       }
     });
-  } catch (error) {
-    console.error("getAllTasksAPI error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error"
-    });
-  }
+  
 };
 
-const postTaskAPI = async (req: Request, res: Response) => {
-    try {
-        const userId = req.user?.userId;
+const createTaskAPI = async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
     if (!userId) {
-        return res.status(401).json({
-            success : false,
-            message: "Unauthorized",
-     });
+        throw new AppError("Unauthorized", 401);
     }
 
     const { title, description, status, priority, deadline } = req.body as TTaskSchema;
@@ -82,10 +67,7 @@ const postTaskAPI = async (req: Request, res: Response) => {
                 message: item.message
             }
         })
-        return res.status(400).json({
-            success: false,
-            message: errors
-        });
+        throw new AppError("Validation failed", 400, errors);
         
     }
     const task = await handleCreateTask(+userId, validation.data);
@@ -94,68 +76,40 @@ const postTaskAPI = async (req: Request, res: Response) => {
         message: "Task created successfully.",
         data: task
     });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error."
-        });
-    }
+    
 }
 
 const getTaskByIdAPI = async (req: Request, res: Response) => {
-    try {
         const userId = req.user?.userId;
     if (!userId) {
-        return res.status(401).json({
-            success : false,
-            message: "Unauthorized",
-     });
+        throw new AppError("Unauthorized", 401);
     }
     const taskId = Number(req.params.id);
 
     if (Number.isNaN(taskId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid task id."
-      });
+      throw new AppError("Invalid task id.", 400);
     }
     
     const task = await handleFindTaskById(+userId, +taskId);
     if (!task) {
-        return res.status(404).json({
-            success: false,
-            message: "Task not found.",
-            data: null
-        });
+        throw new AppError("Task not found.", 404);
     }
     return res.status(200).json({
         success: true,
         data: task
     });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error."
-        });
-    }
+    
 }
 
 const editTaskAPI = async (req: Request, res: Response) => {
-    try {
         const userId = req.user?.userId;
     if (!userId) {
-        return res.status(401).json({
-            success : false,
-            message: "Unauthorized",
-     });
+        throw new AppError("Unauthorized", 401);
     }
     const taskId = Number(req.params.id);
 
     if (Number.isNaN(taskId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid task id."
-      });
+      throw new AppError("Invalid task id.", 400);
     }
     const { title, description, status, priority, deadline } = req.body as TUpdateTaskSchema;
     const validation = await updateTaskSchema.safeParseAsync({ title, description, status, priority, deadline });
@@ -167,74 +121,43 @@ const editTaskAPI = async (req: Request, res: Response) => {
                 message: item.message
             }
         })
-        return res.status(400).json({
-            success: false,
-            message: "Validation failed.",
-            errors
-        });
+        throw new AppError("Validation failed", 400, errors);
     }
     if (Object.keys(validation.data).length === 0) {
-        return res.status(400).json({
-            success: false,
-            message: "No valid fields provided for update."
-    });
+        throw new AppError("At least one field must be provided for update.", 400);
     }
         const result = await handleUpdateTask(+userId, +taskId, validation.data);
         // updateMany returns count of updated records, if it's 0 means task not found or user doesn't have permission to edit
         if (result.count === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Task not found.",
-                data: null
-            });
+            throw new AppError("Task not found.", 404);
         }
         return res.status(200).json({
             success: true,
             message: "Task updated successfully."
         });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error."
-        });
-    }
+    
 }
 
 const deleteTaskAPI = async (req: Request, res: Response) => {
-    try {
+
         const userId = req.user?.userId;
     if (!userId) {
-        return res.status(401).json({
-            success : false,
-            message: "Unauthorized",
-     });
+        throw new AppError("Unauthorized", 401);
     }
     const taskId = Number(req.params.id);
 
     if (Number.isNaN(taskId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid task id."
-      });
+      throw new AppError("Invalid task id.", 400);
     }
     const result = await handleDeleteTask(+userId, +taskId);
     // deleteMany returns count of deleted records, if it's 0 means task not found or user doesn't have permission to delete
     if (result.count === 0) {
-        return res.status(404).json({
-            success: false,
-            message: "Task not found.",
-            data: null
-        });
+       throw new AppError("Task not found.", 404);
     }
     return res.status(200).json({
         success: true,
         message: "Task deleted successfully."
     });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error."
-        });
-    }
+    
 }
-export { getAllTasksAPI,postTaskAPI,getTaskByIdAPI,editTaskAPI,deleteTaskAPI }
+export { getAllTasksAPI,createTaskAPI,getTaskByIdAPI,editTaskAPI,deleteTaskAPI }
