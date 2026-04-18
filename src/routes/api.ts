@@ -1,4 +1,4 @@
-import { createUserAPI, getOTPAPI, loginAPI } from "@/controllers/auth.controller";
+import { createUserAPI, getOTPAPI, googleLogin, loginAPI } from "@/controllers/auth.controller";
 import { createTaskAPI, deleteTaskAPI, editTaskAPI, getAllTasksAPI, getTaskByIdAPI } from "@/controllers/task.controller";
 import { getUser } from "@/controllers/user.controller";
 import { checkValidJWT } from "@/middlewares/jwt.middleware";
@@ -12,6 +12,7 @@ const apiRoutes = (app: Express) => {
     router.post("/register", wrap(createUserAPI));
     router.post("/login", wrap(loginAPI));
     router.post("/send-otp", wrap(getOTPAPI));
+    router.post("/google-login", wrap(googleLogin));
 
     router.get("/profile", getUser);
 

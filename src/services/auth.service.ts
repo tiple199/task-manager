@@ -1,7 +1,9 @@
 import { prisma } from "@/config/prisma"
+import { generateToken } from "@/helper/helper";
 import AppError from "@/utils/appError";
 import { sendOTPEmail } from "@/utils/mailer";
 import bcrypt, { compare } from "bcrypt";
+import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
 
 
@@ -85,9 +87,7 @@ const handleLogin = async (email: string, password: string) => {
         userId: user.id,
         email: user.email
     }
-    const secretKey: string = process.env.JWT_SECRET!;
-    const expiresIn: any = process.env.JWT_EXPIRES_IN;
-    const accessToken = jwt.sign(payload,secretKey,{expiresIn: expiresIn});
+    const accessToken = generateToken(payload);
     return accessToken;
 
 
@@ -129,6 +129,79 @@ const handleCleanOTPs = async () => {
     return result;
 }
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const handleGoogleLogin = async (idToken: string) => {
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID
+  });
+
+  const payload = ticket.getPayload();
+
+  const email = payload?.email;
+  const fullName = payload?.name;
+  const googleId = payload?.sub;
+  const avatar = payload?.picture;
+  if (!email || !fullName || !googleId) {
+    throw new AppError("Google login failed: missing required user information.", 400);
+  }
+
+  let user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+        id: true,
+        email: true,
+        fullName: true,
+        googleId: true,
+        avatar: true,
+        provider: true
+    }
+  });
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email,
+        fullName,
+        password: "", // No password for Google accounts
+        googleId,
+        avatar,
+        provider: "google",
+        isVerified: true
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        googleId: true,
+        avatar: true,
+        provider: true
+      }
+    });
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+        googleId,
+        provider: "google"
+    }
+  });
+  const payloadToken = {
+    userId: user.id,
+    email: user.email
+}
+
+  const token = generateToken(payloadToken);
+
+  return {
+    message: "Google login success",
+    token,
+    user
+  };
+};
 
 
-export { isEmailExists, registerNewUser, hashPassword,handleLogin, comparePassword,sendOTP,handleCleanOTPs }
+
+export { isEmailExists, registerNewUser, hashPassword,handleLogin, comparePassword,sendOTP,handleCleanOTPs,handleGoogleLogin }

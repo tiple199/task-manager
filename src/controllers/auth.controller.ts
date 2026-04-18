@@ -1,4 +1,4 @@
-import { handleLogin, registerNewUser, sendOTP } from "@/services/auth.service";
+import { handleGoogleLogin, handleLogin, registerNewUser, sendOTP } from "@/services/auth.service";
 import AppError from "@/utils/appError";
 import { registerSchema, TRegisterSchema,TLoginSchema, loginSchema, emailSchema } from "@/validation/auth.schema";
 import { Request, Response } from "express";
@@ -80,5 +80,17 @@ const getOTPAPI = async (req: Request, res: Response) => {
     });
 }
 
+const googleLogin = async (req: Request, res: Response) => {
+    const { idToken } = req.body;
+    if (!idToken || typeof idToken !== "string") {
+        throw new AppError("Invalid or missing idToken.", 400, [{ field: "idToken", message: "idToken is required and must be a string." }]);
+    }
 
-export { createUserAPI,loginAPI,getOTPAPI }
+    const result = await handleGoogleLogin(idToken);
+
+    return res.status(201).json(result);
+
+}
+
+
+export { createUserAPI,loginAPI,getOTPAPI,googleLogin }
