@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 const checkValidJWT = (req: Request, res: Response, next: NextFunction) => {
     const path = req.path;
-    const whiteList = ["/login", "/register"];
+    const whiteList = ["/login", "/register","/send-otp"];
     if (whiteList.includes(path)) {
         return next();
     }

@@ -1,4 +1,4 @@
-import { createUserAPI, loginAPI } from "@/controllers/auth.controller";
+import { createUserAPI, getOTPAPI, loginAPI } from "@/controllers/auth.controller";
 import { createTaskAPI, deleteTaskAPI, editTaskAPI, getAllTasksAPI, getTaskByIdAPI } from "@/controllers/task.controller";
 import { getUser } from "@/controllers/user.controller";
 import { checkValidJWT } from "@/middlewares/jwt.middleware";
@@ -11,6 +11,7 @@ const wrap = (fn: AsyncHandler) => asyncHandler(fn);
 const apiRoutes = (app: Express) => {
     router.post("/register", wrap(createUserAPI));
     router.post("/login", wrap(loginAPI));
+    router.post("/send-otp", wrap(getOTPAPI));
 
     router.get("/profile", getUser);
 
@@ -19,6 +20,7 @@ const apiRoutes = (app: Express) => {
     router.get("/tasks/:id", wrap(getTaskByIdAPI));
     router.put("/tasks/:id", wrap(editTaskAPI));
     router.delete("/tasks/:id", wrap(deleteTaskAPI));
+
 
 
 

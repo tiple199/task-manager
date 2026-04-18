@@ -1,10 +1,10 @@
-import { handleLogin, registerNewUser } from "@/services/auth.service";
+import { handleLogin, registerNewUser, sendOTP } from "@/services/auth.service";
 import AppError from "@/utils/appError";
-import { registerSchema, TRegisterSchema,TLoginSchema, loginSchema } from "@/validation/auth.schema";
+import { registerSchema, TRegisterSchema,TLoginSchema, loginSchema, emailSchema } from "@/validation/auth.schema";
 import { Request, Response } from "express";
 const createUserAPI = async (req: Request, res: Response) => {
-    const { fullName, email, password, confirmPassword } = req.body as TRegisterSchema;
-    const validation = await registerSchema.safeParseAsync({ fullName, email, password, confirmPassword });
+    const { fullName, email, password, confirmPassword, otp } = req.body as TRegisterSchema;
+    const validation = await registerSchema.safeParseAsync({ fullName, email, password, confirmPassword,otp });
     if(!validation.success) {
         const errorZod = validation.error.issues;
         const seenFields = new Set<string>();
@@ -23,7 +23,7 @@ const createUserAPI = async (req: Request, res: Response) => {
         throw new AppError("Validation failed.", 400, firstErrors);
     }
 
-    await registerNewUser(fullName, email, password);
+    await registerNewUser(fullName, email, password,otp);
 
     return res.status(201).json({
         success: true,
@@ -60,4 +60,25 @@ const loginAPI = async (req: Request, res: Response) => {
         });
 }
 
-export { createUserAPI,loginAPI }
+const getOTPAPI = async (req: Request, res: Response) => {
+    const validation = await emailSchema.safeParseAsync(req.body.email);
+    if(!validation.success) {
+        const errorZod = validation.error.issues;
+        const firstErrors = errorZod
+            .map((err) => ({
+                field: String(err.path[0] ?? "general"),
+                message: err.message
+            }));
+        throw new AppError("Validation failed.", 400, firstErrors);
+    }
+
+    await sendOTP(validation.data);
+
+    return res.status(200).json({
+        success: true,
+        message: "OTP sent successfully."
+    });
+}
+
+
+export { createUserAPI,loginAPI,getOTPAPI }

@@ -1,5 +1,5 @@
 import z from "zod";
-const emailSchema = z.email("Invalid email format.")
+export const emailSchema = z.email("Invalid email format.")
 
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters long.")
 .max(20, "Password must be at most 20 characters long.")
@@ -12,6 +12,7 @@ export const registerSchema = z.object({
     email: emailSchema,
     password: passwordSchema,
     confirmPassword: z.string(),
+    otp: z.string().trim().length(6, "OTP must be exactly 6 characters long.")
 }).refine((data) => data.password === data.confirmPassword, {
     error: "Passwords do not match.",
     path: ["confirmPassword"]

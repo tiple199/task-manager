@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import apiRoutes from "routes/api";
-import initDatabase from "config/seed";
 import errorHandler from "./middlewares/errorHandler";
 
 const app = express();
@@ -31,6 +30,8 @@ app.use((req,res) => {
         message: "Endpoint not found."
     });
 })
+
+
 
 app.use(errorHandler);
 
