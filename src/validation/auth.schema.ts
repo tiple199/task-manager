@@ -23,5 +23,15 @@ export const loginSchema = z.object({
     password: z.string().min(1, "Password is required.")
 });
 
+export const resetPasswordSchema = z.object({
+    password: passwordSchema,
+    confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+    error: "Passwords do not match.",
+    path: ["confirmPassword"]
+});
+
+
 export type TLoginSchema = z.infer<typeof loginSchema>;
 export type TRegisterSchema = z.infer<typeof registerSchema>;
+export type TResetPasswordSchema = z.infer<typeof resetPasswordSchema>;

@@ -23,6 +23,8 @@ model User {
   avatar String?
   provider String? @default("local")
   tasks    Task[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
 }
 
 model Task {
@@ -35,13 +37,20 @@ model Task {
   deadline    DateTime?
   userId      Int
   user        User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
 }
 
-model OTP{
-  @@map("otps")
+model AuthToken {
+  @@map("authTokens")
   id        Int      @id @default(autoincrement())
   email     String
-  code      String
+  type      String  //"verify_email" or "reset_password"
+  token      String
+  isUsed    Boolean @default(false)
   expiresAt DateTime
   createdAt DateTime @default(now())
+  @@index([email, type, createdAt])
+  @@index([email, type, isUsed])
+  
 }

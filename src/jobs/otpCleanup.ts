@@ -3,7 +3,7 @@ import { handleCleanOTPs } from "@/services/auth.service";
 import nodeCron from "node-cron";
 
 const startOtpCleanupJob = () => {
-  nodeCron.schedule("* * * * *", async () => {
+  nodeCron.schedule("0 0 * * *", async () => {
     try {
       const result = await handleCleanOTPs();
 
