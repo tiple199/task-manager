@@ -23,6 +23,7 @@ model User {
   avatar String?
   provider String? @default("local")
   tasks    Task[]
+  refreshTokens RefreshToken[]
   createdAt DateTime @default(now())
   updatedAt DateTime? @updatedAt
 }
@@ -53,4 +54,14 @@ model AuthToken {
   @@index([email, type, createdAt])
   @@index([email, type, isUsed])
   
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int      
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

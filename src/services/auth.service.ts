@@ -1,8 +1,9 @@
 import { prisma } from "@/config/prisma"
-import { generateToken } from "@/helper/helper";
+import { generateRefreshToken, generateToken } from "@/helper/helper";
 import AppError from "@/utils/appError";
 import bcrypt, { compare } from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
+import { email } from "zod";
 
 
 const saltRounds = 10;
@@ -91,7 +92,18 @@ const handleLogin = async (email: string, password: string) => {
         email: user.email
     }
     const accessToken = generateToken(payload);
-    return accessToken;
+    const refreshToken = generateRefreshToken();
+    await prisma.refreshToken.create({
+    data: {
+      token: refreshToken,
+      userId: user.id,
+      expiresAt: new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      )
+    }
+    });
+
+    return {accessToken,refreshToken};
 
 
 }
@@ -312,6 +324,56 @@ const handleUpdateUserNewPassword = async (token: string, newPassword: string) =
     });
 }
 
+const handleRefreshToken = async (refreshToken: string) => {
+    const tokenRecord = await prisma.refreshToken.findFirst({
+        where: {
+            token: refreshToken,
+            expiresAt: {
+                gt: new Date()
+            },
+        },
+        include: {
+            user: true
+        }
+    });
+    if (!tokenRecord) {
+        throw new AppError("Invalid or expired refresh token.", 401);
+    }
+    if (tokenRecord.revoked) {
+        throw new AppError("Refresh token revoked", 401);
+    }
+    const payload = {
+        userId: tokenRecord.user.id,
+        email: tokenRecord.user.email
+    }
+    const newAccessToken = generateToken(payload);
 
-export { isEmailExists, registerNewUser, hashPassword,handleLogin,
+
+
+    return {
+        accessToken: newAccessToken
+    };
+}
+
+const handleLogout = async (userId: number,refreshToken: string) => {
+    const result = await prisma.refreshToken.updateMany({
+        where: {
+            userId,
+            revoked: false,
+            token: refreshToken,
+            expiresAt: {
+                gt: new Date()
+            }
+        },
+        data: {
+            revoked: true
+        }
+    });
+    if (result.count === 0) {
+        throw new AppError("Invalid refresh token or already logged out.", 400);
+    }
+
+}
+
+export { isEmailExists, registerNewUser, hashPassword,handleLogin,handleRefreshToken,handleLogout,
      comparePassword,sendOTP,handleCleanOTPs,handleGoogleLogin,handleCreateToken,handleUpdateUserNewPassword }

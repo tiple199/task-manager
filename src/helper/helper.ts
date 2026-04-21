@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import crypto from "crypto";
 
 const isTodayOrFuture = (date: Date) => {
   const today = new Date();
@@ -17,4 +18,8 @@ const generateToken = (payload:  {userId: number,email: string}) => {
   return jwt.sign(payload,secretKey,{expiresIn: expiresIn});
 };
 
-export { isTodayOrFuture,generateToken };
+const generateRefreshToken = () => {
+  return crypto.randomBytes(40).toString("hex");
+};
+
+export { isTodayOrFuture,generateToken,generateRefreshToken };

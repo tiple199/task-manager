@@ -1,4 +1,4 @@
-import { createUserAPI, googleLogin, handleForgotPassword, handleResetPassword, loginAPI, sendOTPAPI } from "@/controllers/auth.controller";
+import { createUserAPI, googleLogin, handleForgotPassword, handleResetPassword, loginAPI, logoutController, refreshTokenController, sendOTPAPI } from "@/controllers/auth.controller";
 import { createTaskAPI, deleteTaskAPI, editTaskAPI, getAllTasksAPI, getTaskByIdAPI } from "@/controllers/task.controller";
 import { getUser } from "@/controllers/user.controller";
 import { checkValidJWT } from "@/middlewares/jwt.middleware";
@@ -15,6 +15,8 @@ const apiRoutes = (app: Express) => {
     router.post("/google-login", wrap(googleLogin));
     router.post("/forgot-password", wrap(handleForgotPassword));
     router.post("/reset-password/:token", wrap(handleResetPassword));
+    router.post("/refresh-token", wrap(refreshTokenController));
+    router.post("/logout", wrap(logoutController));
 
     router.get("/profile", getUser);
 

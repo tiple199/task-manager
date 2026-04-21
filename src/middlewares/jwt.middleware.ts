@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 const checkValidJWT = (req: Request, res: Response, next: NextFunction) => {
     const path = req.path;
-    const whiteList = ["/login", "/register","/send-otp","/google-login","/forgot-password"];
+    const whiteList = ["/login", "/register","/send-otp","/google-login","/forgot-password","/refresh-token"];
     if (whiteList.includes(path) ||
     path.startsWith("/reset-password/")) {
         return next();

@@ -1,6 +1,6 @@
-import { handleCreateToken, handleGoogleLogin, handleLogin, handleUpdateUserNewPassword, registerNewUser, sendOTP } from "@/services/auth.service";
+import { handleCreateToken, handleGoogleLogin, handleLogin, handleLogout, handleRefreshToken, handleUpdateUserNewPassword, registerNewUser, sendOTP } from "@/services/auth.service";
 import AppError from "@/utils/appError";
-import { registerSchema, TRegisterSchema,TLoginSchema, loginSchema, emailSchema, resetPasswordSchema } from "@/validation/auth.schema";
+import { registerSchema, TRegisterSchema,TLoginSchema, loginSchema, emailSchema, resetPasswordSchema, refreshTokenSchema } from "@/validation/auth.schema";
 import { Request, Response } from "express";
 import crypto from "crypto";
 import { sendOTPEmail, sendResetPasswordEmail } from "@/utils/mailer";
@@ -162,6 +162,51 @@ const handleResetPassword = async (req: Request, res: Response) => {
     });
 }
 
+const refreshTokenController = async (req: Request, res: Response) => {
+    const { refreshToken } = req.body;
+    const validation = await refreshTokenSchema.safeParseAsync(refreshToken);
+    if(!validation.success) {
+        const errorZod = validation.error.issues;
+        const firstErrors = errorZod            .map((err) => ({
+                field: String(err.path[0] ?? "general"),
+                message: err.message
+            }));
+        throw new AppError("Validation failed.", 400, firstErrors);
+    }
+
+    const result = await handleRefreshToken(refreshToken);
+
+    return res.status(200).json({
+        success: true,
+        message: "Token refreshed successfully.",
+        data: {
+            accessToken: result.accessToken
+        }
+    });
+}
+
+const logoutController = async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const {refreshToken} = req.body;
+    const validation = await refreshTokenSchema.safeParseAsync(refreshToken);
+    if(!validation.success) {
+        const errorZod = validation.error.issues;
+        const firstErrors = errorZod            .map((err) => ({
+                field: String(err.path[0] ?? "general"),
+                message: err.message
+            }));
+        throw new AppError("Validation failed.", 400, firstErrors);
+    }
+    await handleLogout(+userId!,refreshToken);
+    
+
+  return res.status(200).json({
+    success: true,
+    message: "Logged out successfully."
+  });
+};
 
 
-export { createUserAPI,loginAPI,sendOTPAPI,googleLogin,handleForgotPassword,handleResetPassword };
+
+export { createUserAPI,loginAPI,sendOTPAPI,googleLogin,
+    handleForgotPassword,handleResetPassword,refreshTokenController,logoutController };
