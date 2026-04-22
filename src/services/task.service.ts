@@ -34,8 +34,20 @@ const handleGetAllTasks = async (
     take: limit ?? undefined,
     orderBy: sort
   });
+  const count = await prisma.task.count({
+    where: {
+      userId,
+        status,
+        priority,
+        title: search
+          ? {
+                contains: search,
+            }
+          : undefined
+    }
+  });
 
-  return result;
+  return {tasks: result, count};
 };
 
 const handleCreateTask = async (userId: number, taskData: TTaskSchema) => {

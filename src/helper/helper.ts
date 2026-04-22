@@ -22,4 +22,6 @@ const generateRefreshToken = () => {
   return crypto.randomBytes(40).toString("hex");
 };
 
-export { isTodayOrFuture,generateToken,generateRefreshToken };
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export { isTodayOrFuture,generateToken,generateRefreshToken,delay };

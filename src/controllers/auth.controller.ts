@@ -4,6 +4,7 @@ import { registerSchema, TRegisterSchema,TLoginSchema, loginSchema, emailSchema,
 import { Request, Response } from "express";
 import crypto from "crypto";
 import { sendOTPEmail, sendResetPasswordEmail } from "@/utils/mailer";
+import { delay } from "@/helper/helper";
 
 const createUserAPI = async (req: Request, res: Response) => {
     const { fullName, email, password, confirmPassword, otp } = req.body as TRegisterSchema;
@@ -77,8 +78,12 @@ const sendOTPAPI = async (req: Request, res: Response) => {
 
     const result = await sendOTP(validation.data);
 
+
+
     // gửi mail
     sendOTPEmail(validation.data, result.token);
+
+    await delay(2000);
 
     return res.status(200).json({
         success: true,

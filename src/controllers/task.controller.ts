@@ -31,7 +31,7 @@ const getAllTasksAPI = async (req: Request, res: Response) => {
     } = validation.data;
 
     
-    const tasks = await handleGetAllTasks(
+    const result = await handleGetAllTasks(
       Number(userId),
       taskStatus,
       priority,
@@ -41,11 +41,15 @@ const getAllTasksAPI = async (req: Request, res: Response) => {
       sort
     );
 
+
     return res.status(200).json({
       success: true,
       data: {
-        tasks,
-        count: tasks.length
+        tasks: result.tasks,
+        count: result.count,
+        page: page ?? 1,
+        limit: limit ?? result.count
+      
       }
     });
   

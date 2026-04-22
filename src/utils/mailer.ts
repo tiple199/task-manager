@@ -43,7 +43,7 @@ const sendOTPEmail = async (to: string, otp: string) => {
 };
 
 const sendResetPasswordEmail = async (to: string, token: string) => {
-    const resetLink = `${process.env.FRONTEND_URL}/api/reset-password/${token}`;
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
     const htmlTemplate = 
     `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f4f7f6; padding: 20px; border-radius: 8px;"></div>
         <div style="background-color: #ffffff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); text-align: center;">

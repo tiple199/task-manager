@@ -9,7 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: (origin: any, callback: any) => {
-      const allowed = ["http://localhost:3000"];
+      const allowed = ["http://localhost:3001"];
 
       if (!origin || allowed.includes(origin)) {
         callback(null, true);
