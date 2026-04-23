@@ -9,7 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: (origin: any, callback: any) => {
-      const allowed = ["http://localhost:3001"];
+      const allowed = ["process.env.FRONTEND_URL"];
 
       if (!origin || allowed.includes(origin)) {
         callback(null, true);
