@@ -8,7 +8,8 @@ const initDatabase = async () => {
             data: {
                 email: "tiep123@gmail.com",
                 password: await hashPassword("12345678"),
-                fullName: "Tiep Le"
+                fullName: "Tiep Le",
+                isVerified: true
             }
         });
 
@@ -18,7 +19,7 @@ const initDatabase = async () => {
                     title: "Prepare weekly report",
                     description: "Collect progress updates and summarize completed work.",
                     status: "pending",
-                    priority: "high",
+                    priority: 1,
                     deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
                     userId: user.id
                 },

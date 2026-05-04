@@ -267,10 +267,21 @@ const handleGoogleLogin = async (idToken: string) => {
 }
 
   const token = generateToken(payloadToken);
+  const refreshToken = generateRefreshToken();
+  await prisma.refreshToken.create({
+    data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000
+        )
+    }
+  });
 
   return {
     message: "Google login success",
     token,
+    refreshToken,
     user
   };
 };

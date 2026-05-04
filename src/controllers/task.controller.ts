@@ -1,5 +1,6 @@
 import { handleCreateTask, handleDeleteTask, handleFindTaskById, handleGetAllTasks, handleUpdateTask } from "@/services/task.service";
 import AppError from "@/utils/appError";
+import { PRIORITY_MAP } from "@/utils/priority.mapper";
 import { taskSchema, TTaskSchema, TUpdateTaskSchema, updateTaskSchema } from "@/validation/task.schema";
 import { taskQuerySchema } from "@/validation/taskQuery.schema";
 import { Request, Response } from "express";
@@ -45,7 +46,11 @@ const getAllTasksAPI = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       data: {
-        tasks: result.tasks,
+        tasks: 
+            result.tasks.map(task => ({
+                ...task,
+                priority: PRIORITY_MAP[task.priority as keyof typeof PRIORITY_MAP]
+            })),
         count: result.count,
         page: page ?? 1,
         limit: limit ?? result.count

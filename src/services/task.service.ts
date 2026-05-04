@@ -1,4 +1,6 @@
 import { prisma } from "@/config/prisma";
+import AppError from "@/utils/appError";
+import { PRIORITY_MAP, PRIORITY_REVERSE } from "@/utils/priority.mapper";
 import { TTaskSchema } from "@/validation/task.schema";
 
 const handleGetAllTasks = async (
@@ -11,17 +13,21 @@ const handleGetAllTasks = async (
   sort?: {[x: string]: string;}
 ) => {
 
+
+  const statusFilter =
+    status === 'not_completed'
+      ? { in: ['pending', 'in_progress'] }  
+      : status ?? undefined;                 
+
+  const where = {
+    userId,
+    status: statusFilter,
+    priority: priority ? PRIORITY_REVERSE[priority as keyof typeof PRIORITY_REVERSE] : undefined,
+    title: search ? { contains: search } : undefined,
+  };
+
   const result = await prisma.task.findMany({
-    where: {
-      userId,
-      status,
-      priority,
-      title: search
-        ? {
-            contains: search,
-          }
-        : undefined
-    },
+    where,
     select: {
       id: true,
       title: true,
@@ -30,25 +36,16 @@ const handleGetAllTasks = async (
       priority: true,
       deadline: true
     },
-    skip: page && limit ? (page - 1) * (limit) : undefined,
+    skip: page && limit ? (page - 1) * limit : undefined,
     take: limit ?? undefined,
     orderBy: sort
   });
-  const count = await prisma.task.count({
-    where: {
-      userId,
-        status,
-        priority,
-        title: search
-          ? {
-                contains: search,
-            }
-          : undefined
-    }
-  });
 
-  return {tasks: result, count};
+  const count = await prisma.task.count({ where });
+
+  return { tasks: result, count };
 };
+
 
 const handleCreateTask = async (userId: number, taskData: TTaskSchema) => {
     const result = await prisma.task.create({
@@ -56,7 +53,7 @@ const handleCreateTask = async (userId: number, taskData: TTaskSchema) => {
                 title: taskData.title,
                 description: taskData.description,
                 status: taskData.status,
-                priority: taskData.priority,
+                ...(taskData.priority !== undefined && { priority: PRIORITY_REVERSE[taskData.priority] }),
                 deadline: taskData.deadline,
                 userId: +userId
             }
@@ -83,18 +80,48 @@ const handleFindTaskById = async (userId: number, taskId: number) => {
 }
 
 const handleUpdateTask = async (userId: number, taskId: number, updateData: Partial<TTaskSchema>) => {
-    const result = await prisma.task.updateMany({
+  const id = await prisma.task.findFirst({
         where: {
             id: taskId,
             userId: userId
         },
-        data: updateData
+        select: {
+            id: true
+        }
+    });
+    if (!id) {
+        throw new AppError("Task not found or unauthorized.", 400);
+    }
+  
+  const data: any = { ...updateData };
+  if (updateData.priority !== undefined) {
+    data.priority = PRIORITY_REVERSE[updateData.priority];
+  }
+  
+  const result = await prisma.task.updateMany({
+        where: {
+            id: taskId,
+            userId: userId
+        },
+        data
     });
     
     return result;
 }
 
 const handleDeleteTask = async (userId: number, taskId: number) => {
+    const id = await prisma.task.findFirst({
+        where: {
+            id: taskId,
+            userId: userId
+        },
+        select: {
+            id: true
+        }
+    });
+    if (!id) {
+        throw new AppError("Task not found or unauthorized.", 400);
+    }
     const result = await prisma.task.deleteMany({
         where: {
             id: +taskId,
