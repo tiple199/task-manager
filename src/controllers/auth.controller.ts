@@ -56,11 +56,11 @@ const loginAPI = async (req: Request, res: Response) => {
     }
 
 
-        const accessToken = await handleLogin(email, password);
+        const { accessToken, refreshToken } = await handleLogin(email, password);
         return res.status(200).json({
             success: true,
             message: "Login successful.",
-            data: {accessToken}
+            data: { accessToken, refreshToken }
         });
 }
 
@@ -185,7 +185,8 @@ const refreshTokenController = async (req: Request, res: Response) => {
         success: true,
         message: "Token refreshed successfully.",
         data: {
-            accessToken: result.accessToken
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken
         }
     });
 }

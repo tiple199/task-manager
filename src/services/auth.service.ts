@@ -342,6 +342,7 @@ const handleRefreshToken = async (refreshToken: string) => {
             expiresAt: {
                 gt: new Date()
             },
+            revoked: false
         },
         include: {
             user: true
@@ -350,19 +351,36 @@ const handleRefreshToken = async (refreshToken: string) => {
     if (!tokenRecord) {
         throw new AppError("Invalid or expired refresh token.", 401);
     }
-    if (tokenRecord.revoked) {
-        throw new AppError("Refresh token revoked", 401);
-    }
+    
     const payload = {
         userId: tokenRecord.user.id,
         email: tokenRecord.user.email
     }
+    
+    // Generate new access token
     const newAccessToken = generateToken(payload);
-
-
+    
+    // Generate new refresh token (token rotation)
+    const newRefreshToken = generateRefreshToken();
+    
+    // Revoke old refresh token
+    await prisma.refreshToken.update({
+        where: { id: tokenRecord.id },
+        data: { revoked: true }
+    });
+    
+    // Create new refresh token
+    await prisma.refreshToken.create({
+        data: {
+            token: newRefreshToken,
+            userId: tokenRecord.user.id,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        }
+    });
 
     return {
-        accessToken: newAccessToken
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken
     };
 }
 
